@@ -1,0 +1,28 @@
+syntax = "proto3";
+package goGrpc;
+
+option go_package = "grpc/pb";
+
+import "google/protobuf/empty.proto";
+
+message Product {
+  string id = 1;
+  string name = 2;
+}
+
+message CreateProductRequest {
+  string name = 1;
+}
+
+message CreateProductResponse {
+  Product product = 1;
+}
+
+message ListProductsResponse {
+  repeated Product products = 1;
+}
+
+service ProductService {
+  rpc CreateProduct(CreateProductRequest) returns (CreateProductResponse) {};
+  rpc ListProducts(google.protobuf.Empty) returns (ListProductsResponse) {};
+}
