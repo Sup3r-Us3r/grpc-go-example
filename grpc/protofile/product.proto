@@ -1,5 +1,5 @@
 syntax = "proto3";
-package goGrpc;
+package gogrpc;
 
 option go_package = "grpc/pb";
 
