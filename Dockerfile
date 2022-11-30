@@ -10,13 +10,15 @@ ENV GO111MODULE=auto
 ENV CGO_ENABLED=1
 
 RUN apt-get update && \
-  apt-get install build-essential protobuf-compiler librdkafka-dev sudo -y && \
-  go get google.golang.org/grpc/cmd/protoc-gen-go-grpc && \
-  go get google.golang.org/protobuf/cmd/protoc-gen-go && \
-  go get github.com/spf13/cobra && \
-  wget https://github.com/ktr0731/evans/releases/download/v0.10.9/evans_linux_amd64.tar.gz && \
+  apt-get install build-essential protobuf-compiler sudo -y
+
+RUN go get google.golang.org/grpc/cmd/protoc-gen-go-grpc && \
+  go get google.golang.org/protobuf/cmd/protoc-gen-go
+
+RUN wget https://github.com/ktr0731/evans/releases/download/v0.10.9/evans_linux_amd64.tar.gz && \
   tar -xzvf evans_linux_amd64.tar.gz && \
-  mv evans ../bin && rm -rf evans_linux_amd64.tar.gz
+  mv evans /usr/local/bin && \
+  rm -rf evans_linux_amd64.tar.gz
 
 RUN chown -R golang /go
 
