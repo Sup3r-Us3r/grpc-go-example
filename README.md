@@ -33,37 +33,7 @@ $ git clone https://github.com/Sup3r-Us3r/grpc-go-example
 $ cd grpc-go-example
 ```
 
-### Install dependencies
-
-```bash
-$ go mod tidy
-```
-
-### Configure certificate
-
-First for you configure gRPC connection with SSL/TLS you need to edit this [generate.sh](./grpc/cert/generate.sh) file, and change the following information:
-
-> `/C`=BR is for country
-
-> `/ST`=Minas Gerais is for state or province
-
-> `/L`=Belo Horizonte is for locality name or city
-
-> `/O`=Example is for organisation
-
-> `/OU`=Education is for organisation unit
-
-> `/CN`=\*.test is for common name or domain name
-
-> `/emailAddress`=test@gmail.com is for email address
-
-Now run this command to generate the certificate, but it is important that you have openssl installed, if you run this command inside the container the image already has openssl installed:
-
-```bash
-$ make cert
-```
-
-### Run app
+### Access app
 
 The environment were configured using Docker Compose, to start the environment you must run:
 
@@ -77,7 +47,37 @@ Access the application container:
 $ docker exec -it go-grpc-app /bin/bash
 ```
 
-Now start server:
+### Install dependencies
+
+```bash
+$ go mod tidy
+```
+
+### Configure certificate
+
+First for you configure gRPC connection with SSL/TLS you need to edit this [generate.sh](./grpc/cert/generate.sh) file, and change the following information:
+
+> `/C`=**BR** is for country
+
+> `/ST`=**Minas Gerais** is for state or province
+
+> `/L`=**Belo Horizonte** is for locality name or city
+
+> `/O`=**Example** is for organisation
+
+> `/OU`=**Education** is for organisation unit
+
+> `/CN`=**\*.test** is for common name or domain name
+
+> `/emailAddress`=**test@gmail.com** is for email address
+
+Now run this command to generate the certificate, but it is important that you have `openssl` installed, if you run this command inside the container the image already has openssl installed:
+
+```bash
+$ make cert
+```
+
+### Run server
 
 ```bash
 $ go run main.go
