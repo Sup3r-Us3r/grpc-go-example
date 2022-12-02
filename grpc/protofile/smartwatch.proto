@@ -1,0 +1,17 @@
+syntax = "proto3";
+package gogrpc;
+
+option go_package = "grpc/pb";
+
+message BeatsPerMinuteRequest {
+  string uuid = 1;
+}
+
+message BeatsPerMinuteResponse {
+  uint32 value = 1;
+  uint32 minute = 2;
+}
+
+service SmartwatchService {
+  rpc BeatsPerMinute(BeatsPerMinuteRequest) returns (stream BeatsPerMinuteResponse) {};
+}

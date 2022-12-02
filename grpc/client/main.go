@@ -5,16 +5,36 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/Sup3r-Us3r/go-grpc/grpc/pb"
 	"github.com/golang/protobuf/ptypes/empty"
+	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
+
+var (
+	connection *grpc.ClientConn
+)
+
+func init() {
+	tlsCredentials, err := loadTLSCredentials()
+
+	if err != nil {
+		log.Fatal("cannot load TLS credentials: ", err)
+	}
+
+	// connection, err := grpc.Dial("0.0.0.0:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	connection, err = grpc.Dial("0.0.0.0:50051", grpc.WithTransportCredentials(tlsCredentials))
+
+	if err != nil {
+		log.Fatal("cannot dial server: ", err)
+	}
+}
 
 func loadTLSCredentials() (credentials.TransportCredentials, error) {
 	rootDirectory, err := os.Getwd()
@@ -24,7 +44,7 @@ func loadTLSCredentials() (credentials.TransportCredentials, error) {
 	}
 
 	// Load certificate of the CA who signed server's certificate
-	pemServerCA, err := ioutil.ReadFile(
+	pemServerCA, err := os.ReadFile(
 		filepath.Join(rootDirectory, "grpc", "cert", "ca-cert.pem"),
 	)
 
@@ -58,18 +78,6 @@ func loadTLSCredentials() (credentials.TransportCredentials, error) {
 }
 
 func createProduct() {
-	tlsCredentials, err := loadTLSCredentials()
-
-	if err != nil {
-		log.Fatal("cannot load TLS credentials: ", err)
-	}
-
-	connection, err := grpc.Dial("0.0.0.0:50051", grpc.WithTransportCredentials(tlsCredentials))
-
-	if err != nil {
-		log.Fatal("cannot dial server: ", err)
-	}
-
 	client := pb.NewProductServiceClient(connection)
 
 	request := &pb.CreateProductRequest{
@@ -84,41 +92,7 @@ func createProduct() {
 	log.Print(response)
 }
 
-// gRPC client without security
-// func createProduct() {
-// 	connection, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
-
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// 	client := pb.NewProductServiceClient(connection)
-
-// 	request := &pb.CreateProductRequest{
-// 		Name: "Product example",
-// 	}
-// 	response, err := client.CreateProduct(context.Background(), request)
-
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// 	log.Print(response)
-// }
-
 func listProducts() {
-	tlsCredentials, err := loadTLSCredentials()
-
-	if err != nil {
-		log.Fatal("cannot load TLS credentials: ", err)
-	}
-
-	connection, err := grpc.Dial("0.0.0.0:50051", grpc.WithTransportCredentials(tlsCredentials))
-
-	if err != nil {
-		log.Fatal("cannot dial server: ", err)
-	}
-
 	client := pb.NewProductServiceClient(connection)
 
 	request := &empty.Empty{}
@@ -131,28 +105,48 @@ func listProducts() {
 	log.Print(response)
 }
 
-// gRPC client without security
-// func listProducts() {
-// 	connection, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+func beatsPerMinute() {
+	client := pb.NewSmartwatchServiceClient(connection)
 
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
+	request := &pb.BeatsPerMinuteRequest{
+		Uuid: uuid.NewV4().String(),
+	}
 
-// 	client := pb.NewProductServiceClient(connection)
+	stream, err := client.BeatsPerMinute(context.Background(), request)
 
-// 	request := &empty.Empty{}
-// 	response, err := client.ListProducts(context.Background(), request)
+	if err != nil {
+		log.Fatalf("open stream error %v", err)
+	}
 
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
+	done := make(chan bool)
+	defer close(done)
 
-// 	log.Print(response)
-// }
+	go func() {
+		for {
+			response, err := stream.Recv()
+
+			if err == io.EOF {
+				done <- true
+				return
+			}
+
+			if err != nil {
+				log.Fatalf("cannot receive %v", err)
+			}
+
+			log.Printf("stream data received: %s", response.String())
+		}
+	}()
+
+	<-done
+
+	fmt.Println("Finished stream")
+}
 
 func main() {
 	listProducts()
 	fmt.Println()
 	createProduct()
+	fmt.Println()
+	beatsPerMinute()
 }

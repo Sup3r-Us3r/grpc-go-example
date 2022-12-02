@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -27,7 +26,7 @@ func loadTLSCredentials() (credentials.TransportCredentials, error) {
 		return nil, err
 	}
 
-	pemClientCA, err := ioutil.ReadFile(
+	pemClientCA, err := os.ReadFile(
 		filepath.Join(rootDirectory, "grpc", "cert", "ca-cert.pem"),
 	)
 
@@ -74,34 +73,20 @@ func SetupGrpcServer() {
 		panic(err)
 	}
 
+	// grpcServer := grpc.NewServer()
 	grpcServer := grpc.NewServer(grpc.Creds(tlsCredentials))
 	reflection.Register(grpcServer)
 
+	// ProductService
 	productService := service.NewProductGrpcService()
 	productService.Products = ProductList
 	pb.RegisterProductServiceServer(grpcServer, productService)
+
+	// SmartwatchService
+	smartwatchService := service.NewSmartwatchGrpcService()
+	pb.RegisterSmartwatchServiceServer(grpcServer, smartwatchService)
 
 	fmt.Println("GRPC IS RUNNING ON PORT 50051")
 
 	grpcServer.Serve(listener)
 }
-
-// gRPC server without security
-// func SetupGrpcServer() {
-// 	listener, err := net.Listen("tcp", "localhost:50051")
-
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	grpcServer := grpc.NewServer()
-// 	reflection.Register(grpcServer)
-
-// 	productService := service.NewProductGrpcService()
-// 	productService.Products = ProductList
-// 	pb.RegisterProductServiceServer(grpcServer, productService)
-
-// 	fmt.Println("GRPC IS RUNNING ON PORT 50051")
-
-// 	grpcServer.Serve(listener)
-// }
